@@ -1,0 +1,20 @@
+name: Tag Alias - v Prefix
+
+on:
+  push:
+    tags:
+      - "*.*.*"
+  workflow_dispatch:
+    inputs:
+      source_tag:
+        description: "Source tag to alias (e.g. 1.2.0)"
+        required: true
+        type: string
+
+jobs:
+  create-v-prefix-alias:
+    uses: KeepTruckin/github-workflows-catalog/.github/workflows/v-alias-tags.yaml@master
+    with:
+      source_tag: ${{ github.event.inputs.source_tag || github.ref_name }}
+    secrets:
+      KTBOT_GH_PAT: ${{ secrets.KTBOT_GH_PAT }}
