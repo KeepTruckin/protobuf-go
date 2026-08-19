@@ -87,6 +87,10 @@ type MarshalOptions struct {
 		protoregistry.ExtensionTypeResolver
 		protoregistry.MessageTypeResolver
 	}
+
+	// Encode64BitIntegerAsJsonNumber changes the encoder to encode 64-bit
+	// numbers to a JSON number instead of a string.
+	Encode64BitIntegerAsJsonNumber bool
 }
 
 // Format formats the message as a string.
@@ -271,10 +275,21 @@ func (e encoder) marshalSingular(val protoreflect.Value, fd protoreflect.FieldDe
 	case protoreflect.Uint32Kind, protoreflect.Fixed32Kind:
 		e.WriteUint(val.Uint())
 
-	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Uint64Kind,
-		protoreflect.Sfixed64Kind, protoreflect.Fixed64Kind:
+	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
 		// 64-bit integers are written out as JSON string.
-		e.WriteString(val.String())
+		if e.opts.Encode64BitIntegerAsJsonNumber {
+			e.WriteInt(val.Int())
+		} else {
+			e.WriteString(val.String())
+		}
+
+	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
+		// 64-bit integers are written out as JSON string.
+		if e.opts.Encode64BitIntegerAsJsonNumber {
+			e.WriteUint(val.Uint())
+		} else {
+			e.WriteString(val.String())
+		}
 
 	case protoreflect.FloatKind:
 		// Encoder.WriteFloat handles the special numbers NaN and infinites.
